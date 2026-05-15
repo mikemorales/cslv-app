@@ -20,6 +20,7 @@ class AppConstants {
   static const String cacheKeyVillas = 'cache_villas';
   static const String cacheKeyPosts = 'cache_posts';
   static const String cacheKeyAdministrators = 'cache_administrators';
+  static const String cacheKeyPayments = 'cache_payments';
   static const String cacheKeyCategories = 'cache_categories';
   static const String cacheKeyTags = 'cache_tags';
 

@@ -7,7 +7,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/manager_home_screen.dart';
 
 void main() {
-  ApiConfig.setEnvironment(Environment.development);
+  ApiConfig.setEnvironment(Environment.production);
   runApp(const ProviderScope(child: MyApp()));
 }
 

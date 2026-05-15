@@ -52,7 +52,10 @@ class VillaService extends BaseService {
     required int categoryId,
     int? villaId,
   }) async {
-    final payload = <String, dynamic>{'title': title, 'category_id': categoryId};
+    final payload = <String, dynamic>{
+      'title': title,
+      'category_id': categoryId,
+    };
     if (villaId != null) {
       payload['villa_id'] = villaId;
     }
@@ -66,10 +69,7 @@ class VillaService extends BaseService {
       payload['villa_id'] = villaId;
     }
 
-    final response = await post(
-      ApiConfig.villaCheckPermalink,
-      data: payload,
-    );
+    final response = await post(ApiConfig.villaCheckPermalink, data: payload);
 
     return response['available'] == true || response['unique'] == true;
   }
@@ -121,19 +121,14 @@ class VillaService extends BaseService {
     final response = await get(ApiConfig.villaSeasonalRates(villaId));
     final list = (response['data'] as List?) ?? const [];
 
-    return list
-        .map((item) => Map<String, dynamic>.from(item as Map))
-        .toList();
+    return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
 
   Future<void> saveSeasonalRatesRaw(
     int villaId,
     List<Map<String, dynamic>> rates,
   ) async {
-    await post(
-      ApiConfig.villaSeasonalRates(villaId),
-      data: {'rates': rates},
-    );
+    await post(ApiConfig.villaSeasonalRates(villaId), data: {'rates': rates});
   }
 
   Future<String?> getDropboxGalleryUrl(int villaId) async {
@@ -145,7 +140,9 @@ class VillaService extends BaseService {
     return null;
   }
 
-  Future<List<Map<String, dynamic>>> fetchDropboxImages(String dropboxUrl) async {
+  Future<List<Map<String, dynamic>>> fetchDropboxImages(
+    String dropboxUrl,
+  ) async {
     final response = await post(
       ApiConfig.dropboxFetchImages,
       data: {'dropbox_url': dropboxUrl},

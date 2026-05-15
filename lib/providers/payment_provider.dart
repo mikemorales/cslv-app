@@ -2,11 +2,13 @@ library;
 
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../config/api_config.dart';
+import '../constants/app_constants.dart';
 import '../models/booking.dart';
 import '../services/payment_service.dart';
+import '../utils/cache_store.dart';
 
 class PaymentState {
   final bool isLoading;
@@ -67,12 +69,39 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       clearError: true,
     );
 
+    if (page == 1 &&
+        state.items.isEmpty &&
+        selectedStatus == 'pending_payment') {
+      final cached = await CacheStore.read(AppConstants.cacheKeyPayments);
+      if (cached != null) {
+        final bookings = PaginatedBookings.fromJson(
+          Map<String, dynamic>.from(cached['bookings'] as Map),
+        );
+        final stats = PaymentStats.fromJson(
+          Map<String, dynamic>.from(cached['stats'] as Map),
+        );
+        state = state.copyWith(
+          items: bookings.data,
+          stats: stats,
+          currentPage: bookings.currentPage,
+          total: bookings.total,
+        );
+      }
+    }
+
     try {
       final (bookings, stats) = await paymentService.getPendingPayments(
         page: page,
         perPage: ApiConfig.paymentsPerPage,
         status: selectedStatus,
       );
+
+      if (page == 1 && selectedStatus == 'pending_payment') {
+        await CacheStore.write(AppConstants.cacheKeyPayments, {
+          'bookings': bookings.toJson(),
+          'stats': stats.toJson(),
+        });
+      }
 
       state = state.copyWith(
         isLoading: false,
@@ -82,10 +111,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
         total: bookings.total,
       );
     } catch (error) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: error.toString());
     }
   }
 

@@ -1,10 +1,12 @@
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../config/api_config.dart';
+import '../constants/app_constants.dart';
 import '../models/administrator.dart';
 import '../services/administrator_service.dart';
+import '../utils/cache_store.dart';
 
 class AdminState {
   final bool isLoading;
@@ -54,12 +56,32 @@ class AdminNotifier extends StateNotifier<AdminState> {
     final searchTerm = search ?? state.search;
     state = state.copyWith(isLoading: true, search: searchTerm, clearError: true);
 
+    if (page == 1 && state.items.isEmpty && searchTerm.isEmpty) {
+      final cached = await CacheStore.read(AppConstants.cacheKeyAdministrators);
+      if (cached != null) {
+        final response = PaginatedAdministrators.fromJson(cached);
+        state = state.copyWith(
+          items: response.data,
+          currentPage: response.meta.currentPage,
+          lastPage: response.meta.lastPage,
+          total: response.meta.total,
+        );
+      }
+    }
+
     try {
       final response = await administratorService.getAdministrators(
         page: page,
         perPage: ApiConfig.defaultPerPage,
         search: searchTerm,
       );
+
+      if (page == 1 && searchTerm.isEmpty) {
+        await CacheStore.write(
+          AppConstants.cacheKeyAdministrators,
+          response.toJson(),
+        );
+      }
 
       state = state.copyWith(
         isLoading: false,

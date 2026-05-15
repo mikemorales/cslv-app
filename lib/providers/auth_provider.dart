@@ -1,6 +1,6 @@
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../models/auth_user.dart';
 import '../services/auth_service.dart';

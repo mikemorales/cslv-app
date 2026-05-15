@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../config/api_config.dart';
+import '../../models/villa.dart';
 import '../../services/villa_service.dart';
 
 class DropboxGalleryScreen extends StatefulWidget {
   final int villaId;
-  final String? initialUrl;
+  final String? villaTitle;
 
   const DropboxGalleryScreen({
     super.key,
     required this.villaId,
-    this.initialUrl,
+    this.villaTitle,
   });
 
   @override
@@ -17,12 +19,11 @@ class DropboxGalleryScreen extends StatefulWidget {
 }
 
 class _DropboxGalleryScreenState extends State<DropboxGalleryScreen> {
-  final _urlController = TextEditingController();
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isSaving = false;
-  List<Map<String, dynamic>> _images = [];
-  Set<int> _selectedIndexes = {};
-  String? _featuredUrl;
+  String? _errorMessage;
+  String? _dropboxUrl;
+  List<VillaImage> _images = [];
 
   @override
   void initState() {
@@ -31,153 +32,161 @@ class _DropboxGalleryScreenState extends State<DropboxGalleryScreen> {
   }
 
   Future<void> _bootstrap() async {
-    _urlController.text =
-        widget.initialUrl ?? await villaService.getDropboxGalleryUrl(widget.villaId) ?? '';
-  }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  @override
-  void dispose() {
-    _urlController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dropbox Gallery')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          TextField(
-            controller: _urlController,
-            decoration: const InputDecoration(
-              labelText: 'Dropbox Folder URL',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: _isLoading ? null : _fetchImages,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Fetch Images'),
-              ),
-              const SizedBox(width: 12),
-              if (_images.isNotEmpty)
-                Text('${_selectedIndexes.length} selected'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ..._images.asMap().entries.map((entry) {
-            final index = entry.key;
-            final image = entry.value;
-            final selected = _selectedIndexes.contains(index);
-            final imageUrl = image['url']?.toString() ?? '';
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: CheckboxListTile(
-                value: selected,
-                onChanged: (value) {
-                  setState(() {
-                    if (value == true) {
-                      _selectedIndexes.add(index);
-                    } else {
-                      _selectedIndexes.remove(index);
-                    }
-                  });
-                },
-                title: Text(image['name']?.toString() ?? 'Image'),
-                subtitle: Text(imageUrl),
-                secondary: IconButton(
-                  onPressed: selected
-                      ? () => setState(() => _featuredUrl = imageUrl)
-                      : null,
-                  icon: Icon(
-                    _featuredUrl == imageUrl ? Icons.star : Icons.star_border,
-                  ),
-                ),
-              ),
-            );
-          }),
-          if (_images.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _isSaving ? null : _saveGallery,
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Gallery'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Future<void> _fetchImages() async {
-    final dropboxUrl = _urlController.text.trim();
-    if (dropboxUrl.isEmpty) {
-      _showMessage('Dropbox URL is required.');
-      return;
-    }
-
-    setState(() => _isLoading = true);
     try {
-      final images = await villaService.fetchDropboxImages(dropboxUrl);
+      final results = await Future.wait([
+        villaService.getVilla(widget.villaId),
+        villaService.getDropboxGalleryUrl(widget.villaId),
+      ]);
+
+      final villa = results[0] as Villa;
+      final galleryUrl = results[1] as String?;
+      final sortedImages = [...?villa.images]
+        ..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
+
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _images = images;
-        _selectedIndexes = images.isEmpty
-            ? {}
-            : Set<int>.from(List.generate(images.length, (index) => index));
-        _featuredUrl =
-            images.isNotEmpty ? images.first['url']?.toString() : null;
+        _dropboxUrl = galleryUrl;
+        _images = sortedImages;
+        _isLoading = false;
       });
     } catch (error) {
-      _showMessage(error.toString());
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (!mounted) {
+        return;
       }
+
+      setState(() {
+        _errorMessage = error.toString();
+        _isLoading = false;
+      });
     }
   }
 
-  Future<void> _saveGallery() async {
-    if (_selectedIndexes.isEmpty) {
-      _showMessage('Select at least one image.');
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Villa Gallery Order')),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              child: Column(
+                children: [
+                  if (widget.villaTitle != null &&
+                      widget.villaTitle!.isNotEmpty)
+                    ListTile(
+                      title: Text(widget.villaTitle!),
+                      subtitle: Text('Reorder existing villa images only'),
+                    ),
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: _ErrorCard(message: _errorMessage!),
+                    ),
+                  Expanded(
+                    child: _images.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'This villa has no saved gallery images.',
+                              ),
+                            ),
+                          )
+                        : ReorderableListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _images.length,
+                            onReorder: _reorder,
+                            itemBuilder: (context, index) {
+                              final image = _images[index];
+                              final url = _resolveImageUrl(
+                                image.dropboxUrlImage ?? '',
+                              );
+
+                              return Card(
+                                key: ValueKey(image.id),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                child: ListTile(
+                                  leading: _ImagePreview(url: url),
+                                  title: Text('Image #${index + 1}'),
+                                  subtitle: Text(
+                                    image.dropboxUrlImage ?? 'No image URL',
+                                  ),
+                                  trailing: const Icon(Icons.drag_handle),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  if (_images.isNotEmpty)
+                    SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: FilledButton.icon(
+                          onPressed: _isSaving ? null : _saveOrder,
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(
+                            _isSaving ? 'Saving Order...' : 'Save Order',
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    setState(() {
+      final updated = [..._images];
+      final item = updated.removeAt(oldIndex);
+      updated.insert(newIndex, item);
+      _images = updated;
+    });
+  }
+
+  Future<void> _saveOrder() async {
+    if (_dropboxUrl == null || _dropboxUrl!.trim().isEmpty) {
+      _showMessage('This villa does not have a saved Dropbox gallery URL.');
       return;
     }
 
     setState(() => _isSaving = true);
     try {
-      final selectedImages = _selectedIndexes.toList()..sort();
-      final payload = selectedImages.asMap().entries.map((entry) {
-        final image = _images[entry.value];
+      final payload = _images.asMap().entries.map((entry) {
+        final image = entry.value;
+        final sourceUrl = image.dropboxUrlImage ?? '';
         return {
-          'filename': image['name']?.toString() ?? 'image_${entry.key}',
-          'dropbox_url': image['url']?.toString() ?? '',
+          'filename': _filenameFromUrl(sourceUrl),
+          'dropbox_url': sourceUrl,
           'display_order': entry.key,
         };
       }).toList();
 
       await villaService.saveDropboxGalleryData(
         widget.villaId,
-        dropboxUrl: _urlController.text.trim(),
+        dropboxUrl: _dropboxUrl!.trim(),
         images: payload,
-        featuredImage: _featuredUrl,
       );
 
       if (!mounted) {
@@ -194,7 +203,79 @@ class _DropboxGalleryScreenState extends State<DropboxGalleryScreen> {
     }
   }
 
+  String _resolveImageUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    return '${ApiConfig.baseUrl}$url';
+  }
+
+  String _filenameFromUrl(String url) {
+    final sanitized = url.split('?').first;
+    final segments = sanitized.split('/');
+    if (segments.isNotEmpty && segments.last.isNotEmpty) {
+      return segments.last;
+    }
+
+    return 'image';
+  }
+
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _ImagePreview extends StatelessWidget {
+  final String url;
+
+  const _ImagePreview({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        url,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (_, error, stackTrace) {
+          return Container(
+            width: 56,
+            height: 56,
+            color: Colors.grey.shade200,
+            alignment: Alignment.center,
+            child: const Icon(Icons.image_not_supported_outlined),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  final String message;
+
+  const _ErrorCard({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.red.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red.shade700),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+      ),
+    );
   }
 }

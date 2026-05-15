@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../config/api_config.dart';
 import '../../models/post.dart';
 import '../../services/post_service.dart';
 
@@ -14,161 +14,104 @@ class PostGalleryScreen extends StatefulWidget {
 }
 
 class _PostGalleryScreenState extends State<PostGalleryScreen> {
-  final ImagePicker _picker = ImagePicker();
-  bool _isUploading = false;
   bool _isSavingOrder = false;
-  late List<Map<String, dynamic>> _images;
+  late List<PostImage> _images;
 
   @override
   void initState() {
     super.initState();
-    _images = (widget.post.images ?? [])
-        .map(
-          (image) => {
-            'id': image.id,
-            'url': image.imagePath,
-            'sort_order': image.sortOrder,
-            'is_featured': image.isFeatured,
-          },
-        )
-        .toList();
+    _images = [...?widget.post.images]
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Post Gallery'),
-        actions: [
-          IconButton(
-            onPressed: _isUploading ? null : _pickImages,
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (_images.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('No gallery images yet.')),
+      appBar: AppBar(title: const Text('Post Gallery Order')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            ListTile(
+              title: Text(widget.post.title),
+              subtitle: const Text('Reorder existing post images only'),
             ),
-          ..._images.asMap().entries.map((entry) {
-            final index = entry.key;
-            final image = entry.value;
-
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                title: Text('Image #${index + 1}'),
-                subtitle: Text(image['url']?.toString() ?? ''),
-                trailing: Wrap(
-                  spacing: 4,
-                  children: [
-                    IconButton(
-                      onPressed: index == 0 ? null : () => _move(index, index - 1),
-                      icon: const Icon(Icons.arrow_upward),
+            Expanded(
+              child: _images.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('This post has no gallery images.'),
+                      ),
+                    )
+                  : ReorderableListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _images.length,
+                      onReorder: _reorder,
+                      itemBuilder: (context, index) {
+                        final image = _images[index];
+                        return Card(
+                          key: ValueKey(image.id),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: _ImagePreview(
+                              url: _resolveImageUrl(image.imagePath),
+                            ),
+                            title: Text('Image #${index + 1}'),
+                            subtitle: Text(image.imagePath),
+                            trailing: const Icon(Icons.drag_handle),
+                          ),
+                        );
+                      },
                     ),
-                    IconButton(
-                      onPressed: index == _images.length - 1
-                          ? null
-                          : () => _move(index, index + 1),
-                      icon: const Icon(Icons.arrow_downward),
+            ),
+            if (_images.isNotEmpty)
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: FilledButton.icon(
+                    onPressed: _isSavingOrder ? null : _saveOrder,
+                    icon: _isSavingOrder
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(
+                      _isSavingOrder ? 'Saving Order...' : 'Save Order',
                     ),
-                    IconButton(
-                      onPressed: () => _delete(index),
-                      icon: const Icon(Icons.delete_outline),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            );
-          }),
-          if (_images.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _isSavingOrder ? null : _saveOrder,
-              child: _isSavingOrder
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Order'),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Future<void> _pickImages() async {
-    final files = await _picker.pickMultiImage(imageQuality: 85);
-    if (files.isEmpty) {
-      return;
+  void _reorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
     }
 
-    setState(() => _isUploading = true);
-    try {
-      final uploaded = <Map<String, dynamic>>[];
-      for (final file in files) {
-        final response = await postService.uploadGalleryImage(widget.post.id, file);
-        uploaded.add({
-          'id': response['id'],
-          'url': response['url'],
-          'sort_order': response['sort_order'],
-          'is_featured': response['is_featured'],
-        });
-      }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _images = [..._images, ...uploaded]);
-    } catch (error) {
-      _showMessage(error.toString());
-    } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
-    }
-  }
-
-  void _move(int from, int to) {
-    final updated = [..._images];
-    final item = updated.removeAt(from);
-    updated.insert(to, item);
-
-    for (var i = 0; i < updated.length; i++) {
-      updated[i]['sort_order'] = i;
-    }
-
-    setState(() => _images = updated);
-  }
-
-  Future<void> _delete(int index) async {
-    final image = _images[index];
-    try {
-      await postService.deleteGalleryImage(widget.post.id, image['id'] as int);
-      final updated = [..._images]..removeAt(index);
-      for (var i = 0; i < updated.length; i++) {
-        updated[i]['sort_order'] = i;
-      }
-      if (!mounted) {
-        return;
-      }
-      setState(() => _images = updated);
-    } catch (error) {
-      _showMessage(error.toString());
-    }
+    setState(() {
+      final updated = [..._images];
+      final item = updated.removeAt(oldIndex);
+      updated.insert(newIndex, item);
+      _images = updated;
+    });
   }
 
   Future<void> _saveOrder() async {
     setState(() => _isSavingOrder = true);
     try {
-      await postService.reorderGallery(widget.post.id, _images);
+      await postService.reorderGallery(
+        widget.post.id,
+        _images.asMap().entries.map((entry) {
+          return {'id': entry.value.id, 'sort_order': entry.key};
+        }).toList(),
+      );
       if (!mounted) {
         return;
       }
@@ -182,7 +125,49 @@ class _PostGalleryScreenState extends State<PostGalleryScreen> {
     }
   }
 
+  String _resolveImageUrl(String path) {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return '${ApiConfig.baseUrl}$path';
+    }
+
+    return '${ApiConfig.baseUrl}/storage/$path';
+  }
+
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _ImagePreview extends StatelessWidget {
+  final String url;
+
+  const _ImagePreview({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        url,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (_, error, stackTrace) {
+          return Container(
+            width: 56,
+            height: 56,
+            color: Colors.grey.shade200,
+            alignment: Alignment.center,
+            child: const Icon(Icons.image_not_supported_outlined),
+          );
+        },
+      ),
+    );
   }
 }

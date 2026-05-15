@@ -26,78 +26,110 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'CSLV Manager',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Login with your manager account.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 24),
-                        TextFormField(
-                          controller: _loginController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email or username',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: AppValidators.requiredField,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: AppValidators.password,
-                        ),
-                        if (authState.errorMessage != null) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            authState.errorMessage!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background-sunset.jpeg',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Card(
+                    color: Colors.white.withValues(alpha: 0.20),
+                    elevation: 8,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Image.asset(
+                              'assets/images/cslv_logo_white.png',
+                              height: 72,
+                              fit: BoxFit.contain,
                             ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: authState.isLoading ? null : _submit,
-                          child: authState.isLoading
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Sign in'),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Manager',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Login with your manager account.',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            TextFormField(
+                              controller: _loginController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: _inputDecoration(
+                                labelText: 'Email or username',
+                              ),
+                              validator: AppValidators.requiredField,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: _inputDecoration(
+                                labelText: 'Password',
+                              ),
+                              validator: AppValidators.password,
+                            ),
+                            if (authState.errorMessage != null) ...[
+                              const SizedBox(height: 16),
+                              Text(
+                                authState.errorMessage!,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: authState.isLoading ? null : _submit,
+                              child: authState.isLoading
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Sign in'),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -107,9 +139,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    await ref.read(authProvider.notifier).login(
+    await ref
+        .read(authProvider.notifier)
+        .login(
           login: _loginController.text.trim(),
           password: _passwordController.text,
         );
+  }
+
+  InputDecoration _inputDecoration({required String labelText}) {
+    const border = OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.white),
+    );
+
+    return const InputDecoration().copyWith(
+      labelText: labelText,
+      labelStyle: const TextStyle(color: Colors.white),
+      enabledBorder: border,
+      focusedBorder: border,
+      border: border,
+    );
   }
 }

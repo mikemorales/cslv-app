@@ -1,7 +1,7 @@
 library;
 
 class ApiConfig {
-  static const String prodBaseUrl = 'https://cslvillas.com';
+  static const String prodBaseUrl = 'https://cabosanlucasvillas.net';
   static const String devBaseUrl = 'http://localhost:8000';
   static const String sandboxBaseUrl = 'https://staging.cslvillas.com';
 
@@ -31,7 +31,8 @@ class ApiConfig {
   static const String logout = '/app/logout';
 
   static const String categories = '/app/categories';
-  static const String categoriesFlatHierarchy = '/app/categories-flat-hierarchy';
+  static const String categoriesFlatHierarchy =
+      '/app/categories-flat-hierarchy';
   static const String tags = '/app/tags';
   static const String dropbox = '/app/dropbox';
   static const String dropboxFetchImages = '$dropbox/fetch-images';
@@ -44,7 +45,8 @@ class ApiConfig {
   static const String villaCheckPermalink = '$villas/check-permalink';
   static String villaDropboxGallery(int id) => '$villas/$id/dropbox-gallery';
   static String villaSeasonalRates(int id) => '$villas/$id/seasonal-rates';
-  static String villaSetFeaturedImage(int id) => '$villas/$id/set-featured-image';
+  static String villaSetFeaturedImage(int id) =>
+      '$villas/$id/set-featured-image';
 
   static const String posts = '/app/posts';
   static String postById(int id) => '$posts/$id';

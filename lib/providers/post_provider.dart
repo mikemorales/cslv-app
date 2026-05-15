@@ -1,10 +1,12 @@
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../config/api_config.dart';
+import '../constants/app_constants.dart';
 import '../models/post.dart';
 import '../services/post_service.dart';
+import '../utils/cache_store.dart';
 
 class PostState {
   final bool isLoading;
@@ -69,6 +71,22 @@ class PostNotifier extends StateNotifier<PostState> {
       clearError: true,
     );
 
+    if (page == 1 &&
+        state.items.isEmpty &&
+        searchTerm.isEmpty &&
+        selectedStatus == 'published') {
+      final cached = await CacheStore.read(AppConstants.cacheKeyPosts);
+      if (cached != null) {
+        final response = PaginatedPosts.fromJson(cached);
+        state = state.copyWith(
+          items: response.data,
+          currentPage: response.meta.currentPage,
+          lastPage: response.meta.lastPage,
+          total: response.meta.total,
+        );
+      }
+    }
+
     try {
       final response = await postService.getPosts(
         page: page,
@@ -76,6 +94,10 @@ class PostNotifier extends StateNotifier<PostState> {
         search: searchTerm,
         status: selectedStatus,
       );
+
+      if (page == 1 && searchTerm.isEmpty && selectedStatus == 'published') {
+        await CacheStore.write(AppConstants.cacheKeyPosts, response.toJson());
+      }
 
       state = state.copyWith(
         isLoading: false,

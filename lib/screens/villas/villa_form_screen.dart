@@ -261,7 +261,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: _isLoading ? null : _openDropboxGallery,
+                              onPressed: _isLoading
+                                  ? null
+                                  : _openDropboxGallery,
                               child: const Text('Dropbox Gallery'),
                             ),
                           ),
@@ -284,7 +286,11 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                               width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Text(widget.isEditing ? 'Update Villa' : 'Create Villa'),
+                          : Text(
+                              widget.isEditing
+                                  ? 'Update Villa'
+                                  : 'Create Villa',
+                            ),
                     ),
                   ],
                 ),
@@ -321,8 +327,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
               child: _buildTextField(
                 controller: _priceController,
                 label: 'Price',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: _requiredNumberValidator('Price'),
               ),
             ),
@@ -378,8 +385,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
               child: _buildTextField(
                 controller: _taxesController,
                 label: 'Taxes & Fees',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: _requiredNumberValidator('Taxes & Fees'),
               ),
             ),
@@ -388,8 +396,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
               child: _buildTextField(
                 controller: _damageWaiverController,
                 label: 'Damage Waiver',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: _requiredNumberValidator('Damage Waiver'),
               ),
             ),
@@ -402,8 +411,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
               child: _buildTextField(
                 controller: _accommodationController,
                 label: 'Accommodation Taxes',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: _requiredNumberValidator('Accommodation Taxes'),
               ),
             ),
@@ -412,8 +422,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
               child: _buildTextField(
                 controller: _hoaFeeController,
                 label: 'HOA Fee',
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 validator: _requiredNumberValidator('HOA Fee'),
               ),
             ),
@@ -601,7 +612,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
       MaterialPageRoute(
         builder: (_) => DropboxGalleryScreen(
           villaId: widget.villa!.id,
-          initialUrl: null,
+          villaTitle: widget.villa!.title,
         ),
       ),
     );
@@ -614,7 +625,10 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
   Future<void> _openSeasonalRates() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => SeasonalRatesScreen(villaId: widget.villa!.id),
+        builder: (_) => SeasonalRatesScreen(
+          villaId: widget.villa!.id,
+          villaTitle: widget.villa!.title,
+        ),
       ),
     );
 
@@ -624,6 +638,8 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

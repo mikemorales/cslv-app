@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/payment_provider.dart';
+import '../../utils/app_feedback.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/pagination_bar.dart';
 import '../../widgets/state_views.dart';
 
 class PaymentsListScreen extends ConsumerStatefulWidget {
@@ -40,12 +42,18 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _StatChip(label: 'Pending', value: state.stats.pending.toString()),
+              _StatChip(
+                label: 'Pending',
+                value: state.stats.pending.toString(),
+              ),
               _StatChip(
                 label: 'Confirmed',
                 value: state.stats.confirmed.toString(),
               ),
-              _StatChip(label: 'Expired', value: state.stats.expired.toString()),
+              _StatChip(
+                label: 'Expired',
+                value: state.stats.expired.toString(),
+              ),
               _StatChip(
                 label: 'Cancelled',
                 value: state.stats.cancelled.toString(),
@@ -59,8 +67,10 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
   }
 
   Widget _buildContent(PaymentState state) {
+    final lastPage = ((state.total / 20).ceil()).clamp(1, 999999).toInt();
+
     if (state.isLoading && state.items.isEmpty) {
-      return const LoadingView();
+      return const ListSkeletonView();
     }
 
     if (state.errorMessage != null && state.items.isEmpty) {
@@ -74,52 +84,68 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
       return const EmptyView(message: 'No pending payments found.');
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: state.items.length,
-      itemBuilder: (context, index) {
-        final booking = state.items[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  booking.guestName,
-                  style: Theme.of(context).textTheme.titleMedium,
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              final booking = state.items[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        booking.guestName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text('${booking.guestEmail} • ${booking.villa.title}'),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${AppFormatters.currency(booking.totalAmount)} • ${AppFormatters.date(booking.checkInDate)} - ${AppFormatters.date(booking.checkOutDate)}',
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => _openDetails(booking),
+                            child: const Text('Details'),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () => _capture(booking.id),
+                            child: const Text('Capture'),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: () => _cancel(booking.id),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text('${booking.guestEmail} • ${booking.villa.title}'),
-                const SizedBox(height: 8),
-                Text(
-                  '${AppFormatters.currency(booking.totalAmount)} • ${AppFormatters.date(booking.checkInDate)} - ${AppFormatters.date(booking.checkOutDate)}',
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => _openDetails(booking),
-                      child: const Text('Details'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _capture(booking.id),
-                      child: const Text('Capture'),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () => _cancel(booking.id),
-                      child: const Text('Cancel'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        PaginationBar(
+          currentPage: state.currentPage,
+          lastPage: lastPage,
+          total: state.total,
+          onPageChanged: (page) {
+            ref
+                .read(paymentProvider.notifier)
+                .load(page: page, status: state.status);
+          },
+        ),
+      ],
     );
   }
 
@@ -150,8 +176,11 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
 
     try {
       await ref.read(paymentProvider.notifier).capture(bookingId);
+      if (mounted) {
+        AppFeedback.success(context, 'Payment captured successfully.');
+      }
     } catch (error) {
-      _showMessage(error.toString());
+      _showMessage(error.toString(), isError: true);
     }
   }
 
@@ -175,7 +204,8 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
               child: const Text('Close'),
             ),
             FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
               child: const Text('Confirm'),
             ),
           ],
@@ -189,13 +219,21 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
 
     try {
       await ref.read(paymentProvider.notifier).cancel(bookingId, reason);
+      if (mounted) {
+        AppFeedback.success(context, 'Booking cancelled successfully.');
+      }
     } catch (error) {
-      _showMessage(error.toString());
+      _showMessage(error.toString(), isError: true);
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {bool isError = false}) {
+    if (isError) {
+      AppFeedback.error(context, message);
+      return;
+    }
+
+    AppFeedback.info(context, message);
   }
 
   Future<void> _openDetails(dynamic booking) async {
@@ -217,10 +255,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
                   ),
                   const SizedBox(height: 16),
                   _DetailRow(label: 'Email', value: booking.guestEmail),
-                  _DetailRow(
-                    label: 'Phone',
-                    value: booking.guestPhone ?? '-',
-                  ),
+                  _DetailRow(label: 'Phone', value: booking.guestPhone ?? '-'),
                   _DetailRow(label: 'Villa', value: booking.villa.title),
                   _DetailRow(
                     label: 'Dates',

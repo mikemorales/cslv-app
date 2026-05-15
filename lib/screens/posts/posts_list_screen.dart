@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/app_constants.dart';
 import '../../models/post.dart';
 import '../../providers/post_provider.dart';
+import '../../utils/app_feedback.dart';
+import '../../widgets/pagination_bar.dart';
 import '../../widgets/state_views.dart';
 import 'post_form_screen.dart';
 
@@ -97,7 +99,7 @@ class _PostsListScreenState extends ConsumerState<PostsListScreen> {
 
   Widget _buildContent(PostState state) {
     if (state.isLoading && state.items.isEmpty) {
-      return const LoadingView();
+      return const ListSkeletonView();
     }
 
     if (state.errorMessage != null && state.items.isEmpty) {
@@ -111,29 +113,47 @@ class _PostsListScreenState extends ConsumerState<PostsListScreen> {
       return const EmptyView(message: 'No posts found.');
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: state.items.length,
-      itemBuilder: (context, index) {
-        final post = state.items[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            onTap: () => _openEditForm(post),
-            title: Text(post.title),
-            subtitle: Text(post.slug),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(post.status),
-                const SizedBox(height: 4),
-                const Icon(Icons.edit_outlined, size: 16),
-              ],
-            ),
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              final post = state.items[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  onTap: () => _openEditForm(post),
+                  title: Text(post.title),
+                  subtitle: Text(post.slug),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(post.status),
+                      const SizedBox(height: 4),
+                      const Icon(Icons.edit_outlined, size: 16),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        PaginationBar(
+          currentPage: state.currentPage,
+          lastPage: state.lastPage,
+          total: state.total,
+          onPageChanged: (page) {
+            ref.read(postProvider.notifier).load(
+                  page: page,
+                  search: _searchController.text.trim(),
+                  status: state.status,
+                );
+          },
+        ),
+      ],
     );
   }
 
@@ -147,6 +167,7 @@ class _PostsListScreenState extends ConsumerState<PostsListScreen> {
             search: _searchController.text.trim(),
             status: ref.read(postProvider).status,
           );
+      AppFeedback.success(context, 'Post created successfully.');
     }
   }
 
@@ -160,6 +181,7 @@ class _PostsListScreenState extends ConsumerState<PostsListScreen> {
             search: _searchController.text.trim(),
             status: ref.read(postProvider).status,
           );
+      AppFeedback.success(context, 'Post updated successfully.');
     }
   }
 }

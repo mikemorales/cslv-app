@@ -15,11 +15,7 @@ class ApiException implements Exception {
   final int? statusCode;
   final dynamic originalError;
 
-  ApiException({
-    required this.message,
-    this.statusCode,
-    this.originalError,
-  });
+  ApiException({required this.message, this.statusCode, this.originalError});
 
   @override
   String toString() => message;
@@ -90,10 +86,7 @@ class BaseService {
     );
 
     _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: _onRequest,
-        onError: _onError,
-      ),
+      InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
   }
 
@@ -232,7 +225,10 @@ class BaseService {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return ApiException(message: AppConstants.errorTimeout, statusCode: 408);
+        return ApiException(
+          message: AppConstants.errorTimeout,
+          statusCode: 408,
+        );
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         final message = _extractMessage(error.response?.data);
@@ -259,7 +255,12 @@ class BaseService {
         }
 
         if (statusCode == 422) {
-          return ApiException(message: message, statusCode: 422);
+          return ApiException(
+            message:
+                _extractValidationMessage(error.response?.data) ??
+                AppConstants.errorValidation,
+            statusCode: 422,
+          );
         }
 
         if (statusCode != null && statusCode >= 500) {
@@ -294,5 +295,32 @@ class BaseService {
     }
 
     return AppConstants.errorServer;
+  }
+
+  String? _extractValidationMessage(dynamic data) {
+    if (data is! Map) {
+      return null;
+    }
+
+    final fallbackMessage = data['message']?.toString();
+    final errors = data['errors'];
+    if (errors is! Map) {
+      return fallbackMessage;
+    }
+
+    for (final value in errors.values) {
+      if (value is List) {
+        final first = value
+            .map((item) => item.toString().trim())
+            .firstWhere((item) => item.isNotEmpty, orElse: () => '');
+        if (first.isNotEmpty) {
+          return first;
+        }
+      } else if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
+      }
+    }
+
+    return fallbackMessage;
   }
 }

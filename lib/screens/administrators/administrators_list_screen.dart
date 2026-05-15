@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/administrator.dart';
 import '../../providers/admin_provider.dart';
+import '../../utils/app_feedback.dart';
+import '../../widgets/pagination_bar.dart';
 import '../../widgets/state_views.dart';
 import 'administrator_form_screen.dart';
 
@@ -69,7 +71,7 @@ class _AdministratorsListScreenState
 
   Widget _buildContent(AdminState state) {
     if (state.isLoading && state.items.isEmpty) {
-      return const LoadingView();
+      return const ListSkeletonView();
     }
 
     if (state.errorMessage != null && state.items.isEmpty) {
@@ -83,25 +85,43 @@ class _AdministratorsListScreenState
       return const EmptyView(message: 'No administrators found.');
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: state.items.length,
-      itemBuilder: (context, index) {
-        final admin = state.items[index];
-        final roles = admin.roles?.map((role) => role.name).join(', ') ?? '-';
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              final admin = state.items[index];
+              final roles =
+                  admin.roles?.map((role) => role.name).join(', ') ?? '-';
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            onTap: () => _openEditForm(admin),
-            leading: const CircleAvatar(child: Icon(Icons.person)),
-            title: Text(admin.name),
-            subtitle: Text('${admin.email}\n$roles'),
-            isThreeLine: true,
-            trailing: const Icon(Icons.edit_outlined),
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  onTap: () => _openEditForm(admin),
+                  leading: const CircleAvatar(child: Icon(Icons.person)),
+                  title: Text(admin.name),
+                  subtitle: Text('${admin.email}\n$roles'),
+                  isThreeLine: true,
+                  trailing: const Icon(Icons.edit_outlined),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        PaginationBar(
+          currentPage: state.currentPage,
+          lastPage: state.lastPage,
+          total: state.total,
+          onPageChanged: (page) {
+            ref.read(adminProvider.notifier).load(
+                  page: page,
+                  search: _searchController.text.trim(),
+                );
+          },
+        ),
+      ],
     );
   }
 
@@ -114,6 +134,7 @@ class _AdministratorsListScreenState
       ref.read(adminProvider.notifier).load(
             search: _searchController.text.trim(),
           );
+      AppFeedback.success(context, 'Administrator created successfully.');
     }
   }
 
@@ -128,6 +149,7 @@ class _AdministratorsListScreenState
       ref.read(adminProvider.notifier).load(
             search: _searchController.text.trim(),
           );
+      AppFeedback.success(context, 'Administrator updated successfully.');
     }
   }
 }

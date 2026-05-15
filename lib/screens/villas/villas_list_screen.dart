@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/villa.dart';
 import '../../providers/villa_provider.dart';
+import '../../utils/app_feedback.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/pagination_bar.dart';
 import '../../widgets/state_views.dart';
 import 'villa_form_screen.dart';
 
@@ -75,7 +77,7 @@ class _VillasListScreenState extends ConsumerState<VillasListScreen> {
 
   Widget _buildContent(VillaState state) {
     if (state.isLoading && state.items.isEmpty) {
-      return const LoadingView();
+      return const ListSkeletonView();
     }
 
     if (state.errorMessage != null && state.items.isEmpty) {
@@ -89,31 +91,48 @@ class _VillasListScreenState extends ConsumerState<VillasListScreen> {
       return const EmptyView(message: 'No villas found.');
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: state.items.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final villa = state.items[index];
-        return Card(
-          child: ListTile(
-            onTap: () => _openEditForm(villa),
-            title: Text(villa.title),
-            subtitle: Text(
-              '${villa.category?.name ?? 'No category'} • ${AppFormatters.currency(villa.price)}',
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(villa.status),
-                const SizedBox(height: 4),
-                const Icon(Icons.edit_outlined, size: 16),
-              ],
-            ),
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            itemCount: state.items.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final villa = state.items[index];
+              return Card(
+                child: ListTile(
+                  onTap: () => _openEditForm(villa),
+                  title: Text(villa.title),
+                  subtitle: Text(
+                    '${villa.category?.name ?? 'No category'} • ${AppFormatters.currency(villa.price)}',
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(villa.status),
+                      const SizedBox(height: 4),
+                      const Icon(Icons.edit_outlined, size: 16),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+        PaginationBar(
+          currentPage: state.currentPage,
+          lastPage: state.lastPage,
+          total: state.total,
+          onPageChanged: (page) {
+            ref.read(villaProvider.notifier).load(
+                  page: page,
+                  search: _searchController.text.trim(),
+                );
+          },
+        ),
+      ],
     );
   }
 
@@ -126,6 +145,7 @@ class _VillasListScreenState extends ConsumerState<VillasListScreen> {
       ref.read(villaProvider.notifier).load(
             search: _searchController.text.trim(),
           );
+      AppFeedback.success(context, 'Villa created successfully.');
     }
   }
 
@@ -138,6 +158,7 @@ class _VillasListScreenState extends ConsumerState<VillasListScreen> {
       ref.read(villaProvider.notifier).load(
             search: _searchController.text.trim(),
           );
+      AppFeedback.success(context, 'Villa updated successfully.');
     }
   }
 }
