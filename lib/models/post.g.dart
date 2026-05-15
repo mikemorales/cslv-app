@@ -7,15 +7,15 @@ part of 'post.dart';
 // **************************************************************************
 
 Post _$PostFromJson(Map<String, dynamic> json) => Post(
-  id: (json['id'] as num).toInt(),
-  title: json['title'] as String,
-  slug: json['slug'] as String,
-  excerpt: json['excerpt'] as String?,
-  content: json['content'] as String?,
-  status: json['status'] as String,
-  featuredImage: json['featured_image'] as String?,
-  featuredImageUrl: json['featured_image_url'] as String?,
-  authorId: (json['author_id'] as num?)?.toInt(),
+  id: _asInt(json['id']),
+  title: _asString(json['title']),
+  slug: _asString(json['slug']),
+  excerpt: _asNullableString(json['excerpt']),
+  content: _asNullableString(json['content']),
+  status: _asString(json['status']),
+  featuredImage: _asNullableString(json['featured_image']),
+  featuredImageUrl: _asNullableString(json['featured_image_url']),
+  authorId: _asNullableInt(json['author_id']),
   categories: (json['categories'] as List<dynamic>?)
       ?.map((e) => Category.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -25,9 +25,9 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   images: (json['images'] as List<dynamic>?)
       ?.map((e) => PostImage.fromJson(e as Map<String, dynamic>))
       .toList(),
-  publishedAt: json['published_at'] as String?,
-  createdAt: json['created_at'] as String?,
-  updatedAt: json['updated_at'] as String?,
+  publishedAt: _asNullableString(json['published_at']),
+  createdAt: _asNullableString(json['created_at']),
+  updatedAt: _asNullableString(json['updated_at']),
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -49,10 +49,10 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
 };
 
 PostImage _$PostImageFromJson(Map<String, dynamic> json) => PostImage(
-  id: (json['id'] as num).toInt(),
-  imagePath: json['image_path'] as String,
-  sortOrder: (json['sort_order'] as num).toInt(),
-  isFeatured: json['is_featured'] as bool,
+  id: _asInt(json['id']),
+  imagePath: _asString(json['image_path']),
+  sortOrder: _asNullableInt(json['sort_order']),
+  isFeatured: _asBool(json['is_featured']),
 );
 
 Map<String, dynamic> _$PostImageToJson(PostImage instance) => <String, dynamic>{
@@ -63,7 +63,7 @@ Map<String, dynamic> _$PostImageToJson(PostImage instance) => <String, dynamic>{
 };
 
 Category _$CategoryFromJson(Map<String, dynamic> json) =>
-    Category(id: (json['id'] as num).toInt(), name: json['name'] as String);
+    Category(id: _asInt(json['id']), name: _asString(json['name']));
 
 Map<String, dynamic> _$CategoryToJson(Category instance) => <String, dynamic>{
   'id': instance.id,
@@ -71,7 +71,7 @@ Map<String, dynamic> _$CategoryToJson(Category instance) => <String, dynamic>{
 };
 
 Tag _$TagFromJson(Map<String, dynamic> json) =>
-    Tag(id: (json['id'] as num).toInt(), name: json['name'] as String);
+    Tag(id: _asInt(json['id']), name: _asString(json['name']));
 
 Map<String, dynamic> _$TagToJson(Tag instance) => <String, dynamic>{
   'id': instance.id,
@@ -91,12 +91,12 @@ Map<String, dynamic> _$PaginatedPostsToJson(PaginatedPosts instance) =>
 
 PaginationMeta _$PaginationMetaFromJson(Map<String, dynamic> json) =>
     PaginationMeta(
-      currentPage: (json['current_page'] as num).toInt(),
-      lastPage: (json['last_page'] as num).toInt(),
-      perPage: (json['per_page'] as num).toInt(),
-      total: (json['total'] as num).toInt(),
-      from: (json['from'] as num).toInt(),
-      to: (json['to'] as num).toInt(),
+      currentPage: _asInt(json['current_page']),
+      lastPage: _asInt(json['last_page']),
+      perPage: _asInt(json['per_page']),
+      total: _asInt(json['total']),
+      from: _asInt(json['from']),
+      to: _asInt(json['to']),
     );
 
 Map<String, dynamic> _$PaginationMetaToJson(PaginationMeta instance) =>

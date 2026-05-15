@@ -72,7 +72,12 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
             loading: () => const SizedBox.shrink(),
             error: (_, stackTrace) => const SizedBox.shrink(),
           ),
-          Expanded(child: _screens[_currentIndex]),
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _screens,
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(

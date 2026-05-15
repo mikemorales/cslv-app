@@ -21,7 +21,7 @@ class _PostGalleryScreenState extends State<PostGalleryScreen> {
   void initState() {
     super.initState();
     _images = [...?widget.post.images]
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      ..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
   }
 
   @override
