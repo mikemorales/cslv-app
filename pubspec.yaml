@@ -37,7 +37,7 @@ dependencies:
   shimmer: ^3.0.0
   
   # HTTP & API
-  dio: ^5.3.0
+  dio: ^5.9.0
   http: ^1.1.0
   
   # State Management
@@ -47,16 +47,16 @@ dependencies:
   
   # Storage & Persistence
   flutter_secure_storage: ^10.2.0
-  shared_preferences: ^2.2.2
-  sqflite: ^2.3.0
-  path_provider: ^2.1.0
+  shared_preferences: ^2.5.3
+  sqflite: ^2.4.2
+  path_provider: ^2.1.5
   
   # Image Handling
-  cached_network_image: ^3.3.1
-  image_picker: ^1.0.0
+  cached_network_image: ^3.4.1
+  image_picker: ^1.2.0
   
   # Maps
-  google_maps_flutter: ^2.5.0
+  google_maps_flutter: ^2.14.0
   
   # Text Editing & Rich Content
   html: ^0.15.4
@@ -67,11 +67,11 @@ dependencies:
   smooth_page_indicator: ^2.0.1
   
   # Dialogs & Notifications
-  get: ^4.6.5
+  get: ^4.7.2
   fluttertoast: ^9.0.0
   
   # JSON Serialization
-  json_annotation: ^4.8.1
+  json_annotation: ^4.11.0
 
 dev_dependencies:
   flutter_test:
@@ -79,8 +79,8 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
-  build_runner: ^2.4.6
-  json_serializable: ^6.7.1
+  build_runner: ^2.15.0
+  json_serializable: ^6.13.0
   riverpod_generator: ^4.0.3
 
 # For information on the generic Dart part of this file, see the

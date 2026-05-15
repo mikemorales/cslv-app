@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../models/auth_user.dart';
 import '../services/auth_service.dart';
+import '../services/base_service.dart';
 
 class AuthState {
   final bool isLoading;
@@ -40,6 +41,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthState()) {
+    BaseService.onUnauthorized = handleUnauthorized;
     initialize();
   }
 
@@ -93,6 +95,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, clearError: true);
     await authService.logout();
+    state = const AuthState(isInitialized: true);
+  }
+
+  Future<void> handleUnauthorized() async {
     state = const AuthState(isInitialized: true);
   }
 }

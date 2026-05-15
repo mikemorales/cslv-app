@@ -9,6 +9,7 @@ import '../config/api_config.dart';
 import '../constants/app_constants.dart';
 
 typedef ApiResponse = Map<String, dynamic>;
+typedef UnauthorizedCallback = Future<void> Function();
 
 class ApiException implements Exception {
   final String message;
@@ -27,6 +28,7 @@ class BaseService {
   }
 
   static const FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  static UnauthorizedCallback? onUnauthorized;
   late final Dio _dio;
 
   static Future<void> saveToken(String token) {
@@ -110,6 +112,7 @@ class BaseService {
   ) async {
     if (err.response?.statusCode == 401) {
       await clearSession();
+      await onUnauthorized?.call();
     }
 
     handler.next(err);
