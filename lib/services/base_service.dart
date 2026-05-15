@@ -100,6 +100,7 @@ class BaseService {
 
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
+      options.headers['X-Mobile-Token'] = token;
     }
 
     options.headers['Accept'] = 'application/json';
