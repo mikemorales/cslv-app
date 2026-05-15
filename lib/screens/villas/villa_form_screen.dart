@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/api_config.dart';
 import '../../constants/app_constants.dart';
 import '../../models/villa.dart';
 import '../../services/category_service.dart';
@@ -40,6 +44,8 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
   final _damageWaiverController = TextEditingController();
   final _accommodationController = TextEditingController();
   final _hoaFeeController = TextEditingController();
+  Timer? _permalinkDebounce;
+  String _lastPermalinkSeed = '';
 
   bool _isLoading = false;
   bool _isBootstrapping = true;
@@ -54,6 +60,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
   void initState() {
     super.initState();
     _fillInitialValues();
+    _titleController.addListener(_schedulePermalinkGeneration);
     _loadOptions();
   }
 
@@ -119,6 +126,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
 
   @override
   void dispose() {
+    _permalinkDebounce?.cancel();
     _titleController.dispose();
     _slugController.dispose();
     _permalinkController.dispose();
@@ -139,6 +147,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final canVisitUrl =
+        widget.isEditing && _permalinkController.text.trim().isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: _navy,
@@ -153,9 +164,10 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _isLoading ? null : _generatePermalink,
+            onPressed:
+                _isLoading || !canVisitUrl ? null : _openPermalinkInBrowser,
             child: Text(
-              'Permalink',
+              'Visit URL',
               style: GoogleFonts.raleway(
                 color: _gold,
                 fontWeight: FontWeight.w700,
@@ -192,7 +204,10 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                           .toList(),
                       onChanged: _isLoading
                           ? null
-                          : (value) => setState(() => _categoryId = value),
+                          : (value) {
+                              setState(() => _categoryId = value);
+                              _schedulePermalinkGeneration();
+                            },
                       validator: (value) =>
                           value == null ? 'Category is required.' : null,
                     ),
@@ -208,12 +223,6 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                               field: 'Slug',
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        IconButton(
-                          onPressed: _isLoading ? null : _generatePermalink,
-                          icon: const Icon(Icons.auto_fix_high),
-                          color: _gold,
                         ),
                       ],
                     ),
@@ -532,7 +541,6 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
 
   Future<void> _generatePermalink() async {
     if (_titleController.text.trim().isEmpty || _categoryId == null) {
-      _showMessage('Title and category are required to generate permalink.');
       return;
     }
 
@@ -553,6 +561,77 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _schedulePermalinkGeneration() {
+    if (_isBootstrapping || _isLoading) {
+      return;
+    }
+
+    final title = _titleController.text.trim();
+    final categoryId = _categoryId;
+    if (title.isEmpty || categoryId == null) {
+      _permalinkDebounce?.cancel();
+      _lastPermalinkSeed = '';
+      _slugController.clear();
+      _permalinkController.clear();
+      return;
+    }
+
+    final seed = '$title|$categoryId';
+    if (seed == _lastPermalinkSeed) {
+      return;
+    }
+
+    _permalinkDebounce?.cancel();
+    _permalinkDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) {
+        return;
+      }
+
+      _lastPermalinkSeed = seed;
+      _generatePermalink();
+    });
+  }
+
+  Future<void> _openPermalinkInBrowser() async {
+    final permalink = _permalinkController.text.trim();
+    if (permalink.isEmpty) {
+      _showMessage('No permalink available for this villa.');
+      return;
+    }
+
+    final uri = _buildVillaUri(permalink);
+    if (uri == null) {
+      _showMessage('Invalid permalink.');
+      return;
+    }
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        _showMessage('Could not open the villa URL.');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showMessage(
+          'Visit URL requires a full app restart after installing url_launcher.',
+        );
+      }
+    }
+  }
+
+  Uri? _buildVillaUri(String permalink) {
+    final directUri = Uri.tryParse(permalink);
+    if (directUri != null && directUri.hasScheme) {
+      return directUri;
+    }
+
+    final normalizedPath = permalink.startsWith('/') ? permalink : '/$permalink';
+    return Uri.tryParse('${ApiConfig.baseUrl}$normalizedPath');
   }
 
   Future<void> _submit() async {

@@ -73,6 +73,7 @@ dependencies:
   # Dialogs & Notifications
   get: ^4.7.2
   fluttertoast: ^9.0.0
+  url_launcher: ^6.3.2
   
   # JSON Serialization
   json_annotation: ^4.11.0
