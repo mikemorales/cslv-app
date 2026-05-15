@@ -15,6 +15,13 @@ class PaymentsListScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
+  static const _statusOptions = <({String label, String value})>[
+    (label: 'Pending', value: 'pending_payment'),
+    (label: 'Confirmed', value: 'confirmed'),
+    (label: 'Expired', value: 'expired'),
+    (label: 'Cancelled', value: 'cancelled'),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -42,22 +49,17 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _StatChip(
-                label: 'Pending',
-                value: state.stats.pending.toString(),
-              ),
-              _StatChip(
-                label: 'Confirmed',
-                value: state.stats.confirmed.toString(),
-              ),
-              _StatChip(
-                label: 'Expired',
-                value: state.stats.expired.toString(),
-              ),
-              _StatChip(
-                label: 'Cancelled',
-                value: state.stats.cancelled.toString(),
-              ),
+              for (final option in _statusOptions)
+                _StatChip(
+                  label: option.label,
+                  value: _statusCount(state, option.value).toString(),
+                  isSelected: state.status == option.value,
+                  onTap: () {
+                    ref
+                        .read(paymentProvider.notifier)
+                        .load(status: option.value);
+                  },
+                ),
             ],
           ),
         ),
@@ -99,12 +101,21 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        booking.guestName,
-                        style: Theme.of(context).textTheme.titleMedium,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              booking.guestName,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          _StatusBadge(status: booking.status),
+                        ],
                       ),
                       const SizedBox(height: 4),
-                      Text('${booking.guestEmail} • ${booking.villa.title}'),
+                      Text(
+                        '${booking.guestEmail} • ${booking.villa.title}',
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         '${AppFormatters.currency(booking.totalAmount)} • ${AppFormatters.date(booking.checkInDate)} - ${AppFormatters.date(booking.checkOutDate)}',
@@ -117,15 +128,17 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
                             child: const Text('Details'),
                           ),
                           const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: () => _capture(booking.id),
-                            child: const Text('Capture'),
-                          ),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: () => _cancel(booking.id),
-                            child: const Text('Cancel'),
-                          ),
+                          if (booking.status == 'pending_payment') ...[
+                            OutlinedButton(
+                              onPressed: () => _capture(booking.id),
+                              child: const Text('Capture'),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () => _cancel(booking.id),
+                              child: const Text('Cancel'),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -299,17 +312,96 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
       },
     );
   }
+
+  int _statusCount(PaymentState state, String status) {
+    switch (status) {
+      case 'pending_payment':
+        return state.stats.pending;
+      case 'confirmed':
+        return state.stats.confirmed;
+      case 'expired':
+        return state.stats.expired;
+      case 'cancelled':
+        return state.stats.cancelled;
+      default:
+        return 0;
+    }
+  }
 }
 
 class _StatChip extends StatelessWidget {
   final String label;
   final String value;
+  final bool isSelected;
+  final VoidCallback? onTap;
 
-  const _StatChip({required this.label, required this.value});
+  const _StatChip({
+    required this.label,
+    required this.value,
+    this.isSelected = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Chip(label: Text('$label: $value'));
+    return ChoiceChip(
+      label: Text('$label: $value'),
+      selected: isSelected,
+      onSelected: (_) => onTap?.call(),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, background, foreground) = switch (status) {
+      'pending_payment' => (
+        'Pending',
+        const Color(0xFFFFF4CC),
+        const Color(0xFF8A6116),
+      ),
+      'confirmed' => (
+        'Confirmed',
+        const Color(0xFFDDF7E7),
+        const Color(0xFF166534),
+      ),
+      'expired' => (
+        'Expired',
+        const Color(0xFFFDE2E1),
+        const Color(0xFF991B1B),
+      ),
+      'cancelled' => (
+        'Cancelled',
+        const Color(0xFFE5E7EB),
+        const Color(0xFF374151),
+      ),
+      _ => (
+        status,
+        const Color(0xFFE5E7EB),
+        const Color(0xFF374151),
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foreground,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 

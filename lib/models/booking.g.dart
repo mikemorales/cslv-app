@@ -7,29 +7,29 @@ part of 'booking.dart';
 // **************************************************************************
 
 Booking _$BookingFromJson(Map<String, dynamic> json) => Booking(
-  id: (json['id'] as num).toInt(),
-  guestName: json['guest_name'] as String,
-  guestEmail: json['guest_email'] as String,
-  guestPhone: json['guest_phone'] as String?,
-  checkInDate: json['check_in_date'] as String,
-  checkOutDate: json['check_out_date'] as String,
-  totalNights: (json['total_nights'] as num).toInt(),
-  guestCount: (json['guest_count'] as num).toInt(),
-  totalAmount: (json['total_amount'] as num).toDouble(),
-  specialRequests: json['special_requests'] as String?,
-  status: json['status'] as String,
-  paymentRule: json['payment_rule'] as String,
-  depositAmount: (json['deposit_amount'] as num?)?.toDouble(),
-  balanceAmount: (json['balance_amount'] as num?)?.toDouble(),
-  balanceDueDate: json['balance_due_date'] as String?,
-  balancePaidAt: json['balance_paid_at'] as String?,
-  balanceStatus: json['balance_status'] as String?,
-  createdAt: json['created_at'] as String,
-  expiresAt: json['expires_at'] as String,
-  authorizedAt: json['authorized_at'] as String?,
-  capturedAt: json['captured_at'] as String?,
-  cancelledAt: json['cancelled_at'] as String?,
-  paymentEnvironment: json['payment_environment'] as String,
+  id: _asInt(json['id']),
+  guestName: _asString(json['guest_name']),
+  guestEmail: _asString(json['guest_email']),
+  guestPhone: _asNullableString(json['guest_phone']),
+  checkInDate: _asString(json['check_in_date']),
+  checkOutDate: _asString(json['check_out_date']),
+  totalNights: _asInt(json['total_nights']),
+  guestCount: _asInt(json['guest_count']),
+  totalAmount: _asDouble(json['total_amount']),
+  specialRequests: _asNullableString(json['special_requests']),
+  status: _asString(json['status']),
+  paymentRule: _asString(json['payment_rule']),
+  depositAmount: _asNullableDouble(json['deposit_amount']),
+  balanceAmount: _asNullableDouble(json['balance_amount']),
+  balanceDueDate: _asNullableString(json['balance_due_date']),
+  balancePaidAt: _asNullableString(json['balance_paid_at']),
+  balanceStatus: _asNullableString(json['balance_status']),
+  createdAt: _asString(json['created_at']),
+  expiresAt: _asString(json['expires_at']),
+  authorizedAt: _asNullableString(json['authorized_at']),
+  capturedAt: _asNullableString(json['captured_at']),
+  cancelledAt: _asNullableString(json['cancelled_at']),
+  paymentEnvironment: _asString(json['payment_environment']),
   villa: Villa.fromJson(json['villa'] as Map<String, dynamic>),
 );
 
@@ -61,9 +61,9 @@ Map<String, dynamic> _$BookingToJson(Booking instance) => <String, dynamic>{
 };
 
 Villa _$VillaFromJson(Map<String, dynamic> json) => Villa(
-  id: (json['id'] as num).toInt(),
-  title: json['title'] as String,
-  location: json['location'] as String,
+  id: _asInt(json['id']),
+  title: _asString(json['title']),
+  location: _asString(json['location']),
 );
 
 Map<String, dynamic> _$VillaToJson(Villa instance) => <String, dynamic>{
@@ -73,10 +73,10 @@ Map<String, dynamic> _$VillaToJson(Villa instance) => <String, dynamic>{
 };
 
 PaymentStats _$PaymentStatsFromJson(Map<String, dynamic> json) => PaymentStats(
-  pending: (json['pending'] as num).toInt(),
-  confirmed: (json['confirmed'] as num).toInt(),
-  expired: (json['expired'] as num).toInt(),
-  cancelled: (json['cancelled'] as num).toInt(),
+  pending: _asInt(json['pending']),
+  confirmed: _asInt(json['confirmed']),
+  expired: _asInt(json['expired']),
+  cancelled: _asInt(json['cancelled']),
 );
 
 Map<String, dynamic> _$PaymentStatsToJson(PaymentStats instance) =>
@@ -92,9 +92,9 @@ PaginatedBookings _$PaginatedBookingsFromJson(Map<String, dynamic> json) =>
       data: (json['data'] as List<dynamic>)
           .map((e) => Booking.fromJson(e as Map<String, dynamic>))
           .toList(),
-      total: (json['total'] as num).toInt(),
-      perPage: (json['per_page'] as num).toInt(),
-      currentPage: (json['current_page'] as num).toInt(),
+      total: _asInt(json['total']),
+      perPage: _asInt(json['per_page']),
+      currentPage: _asInt(json['current_page']),
     );
 
 Map<String, dynamic> _$PaginatedBookingsToJson(PaginatedBookings instance) =>

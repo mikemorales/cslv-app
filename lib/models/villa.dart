@@ -7,8 +7,47 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'villa.g.dart';
 
+int _asInt(dynamic value, {int fallback = 0}) {
+  if (value == null) return fallback;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return fallback;
+    return int.tryParse(normalized) ??
+        double.tryParse(normalized)?.toInt() ??
+        fallback;
+  }
+  return fallback;
+}
+
+int? _asNullableInt(dynamic value) {
+  if (value == null) return null;
+  if (value is String && value.trim().isEmpty) return null;
+  return _asInt(value);
+}
+
+double _asDouble(dynamic value, {double fallback = 0}) {
+  if (value == null) return fallback;
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return fallback;
+    return double.tryParse(normalized) ?? fallback;
+  }
+  return fallback;
+}
+
+double? _asNullableDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is String && value.trim().isEmpty) return null;
+  return _asDouble(value);
+}
+
 @JsonSerializable()
 class Villa {
+  @JsonKey(fromJson: _asInt)
   final int id;
   final String title;
   final String slug;
@@ -21,25 +60,32 @@ class Villa {
   final String? featuredImage;
   @JsonKey(name: 'featured_image_url')
   final String? featuredImageUrl;
+  @JsonKey(fromJson: _asDouble)
   final double price;
+  @JsonKey(fromJson: _asInt)
   final int bathrooms;
+  @JsonKey(fromJson: _asInt)
   final int bedrooms;
+  @JsonKey(fromJson: _asInt)
   final int sleeps;
+  @JsonKey(fromJson: _asNullableDouble)
   final double? sqft;
   final String? view;
+  @JsonKey(fromJson: _asNullableDouble)
   final double? longitude;
+  @JsonKey(fromJson: _asNullableDouble)
   final double? latitude;
   @JsonKey(name: 'ical_url')
   final String? icalUrl;
-  @JsonKey(name: 'taxes_and_fees')
+  @JsonKey(name: 'taxes_and_fees', fromJson: _asNullableDouble)
   final double? taxesAndFees;
-  @JsonKey(name: 'damage_waiver')
+  @JsonKey(name: 'damage_waiver', fromJson: _asNullableDouble)
   final double? damageWaiver;
-  @JsonKey(name: 'accommodation_taxes_fees')
+  @JsonKey(name: 'accommodation_taxes_fees', fromJson: _asNullableDouble)
   final double? accommodationTaxesFees;
-  @JsonKey(name: 'hoa_fee')
+  @JsonKey(name: 'hoa_fee', fromJson: _asNullableDouble)
   final double? hoaFee;
-  @JsonKey(name: 'category_id')
+  @JsonKey(name: 'category_id', fromJson: _asInt)
   final int categoryId;
   final Category? category;
   final List<Tag>? tags;
@@ -156,10 +202,11 @@ class Villa {
 
 @JsonSerializable()
 class VillaImage {
+  @JsonKey(fromJson: _asInt)
   final int id;
   @JsonKey(name: 'dropbox_url_image')
   final String? dropboxUrlImage;
-  @JsonKey(name: 'sort_order')
+  @JsonKey(name: 'sort_order', fromJson: _asNullableInt)
   final int? sortOrder;
   @JsonKey(name: 'is_featured')
   final bool? isFeatured;
@@ -179,6 +226,7 @@ class VillaImage {
 
 @JsonSerializable()
 class Category {
+  @JsonKey(fromJson: _asInt)
   final int id;
   final String name;
   @JsonKey(name: 'full_path')
@@ -194,6 +242,7 @@ class Category {
 
 @JsonSerializable()
 class Tag {
+  @JsonKey(fromJson: _asInt)
   final int id;
   final String name;
 
@@ -206,14 +255,16 @@ class Tag {
 
 @JsonSerializable()
 class SeasonalRate {
+  @JsonKey(fromJson: _asNullableInt)
   final int? id;
   final String season;
   @JsonKey(name: 'start_date')
   final String startDate;
   @JsonKey(name: 'end_date')
   final String endDate;
+  @JsonKey(fromJson: _asDouble)
   final double rate;
-  @JsonKey(name: 'weekend_rate')
+  @JsonKey(name: 'weekend_rate', fromJson: _asNullableDouble)
   final double? weekendRate;
 
   SeasonalRate({
@@ -246,14 +297,17 @@ class PaginatedVillas {
 
 @JsonSerializable()
 class PaginationMeta {
-  @JsonKey(name: 'current_page')
+  @JsonKey(name: 'current_page', fromJson: _asInt)
   final int currentPage;
-  @JsonKey(name: 'last_page')
+  @JsonKey(name: 'last_page', fromJson: _asInt)
   final int lastPage;
-  @JsonKey(name: 'per_page')
+  @JsonKey(name: 'per_page', fromJson: _asInt)
   final int perPage;
+  @JsonKey(fromJson: _asInt)
   final int total;
+  @JsonKey(fromJson: _asInt)
   final int from;
+  @JsonKey(fromJson: _asInt)
   final int to;
 
   PaginationMeta({

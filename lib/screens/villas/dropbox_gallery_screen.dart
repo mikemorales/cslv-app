@@ -100,6 +100,7 @@ class _DropboxGalleryScreenState extends State<DropboxGalleryScreen> {
                             ),
                           )
                         : ReorderableListView.builder(
+                            buildDefaultDragHandles: false,
                             padding: const EdgeInsets.all(16),
                             itemCount: _images.length,
                             onReorder: _reorder,
@@ -112,13 +113,33 @@ class _DropboxGalleryScreenState extends State<DropboxGalleryScreen> {
                               return Card(
                                 key: ValueKey(image.id),
                                 margin: const EdgeInsets.only(bottom: 12),
-                                child: ListTile(
-                                  leading: _ImagePreview(url: url),
-                                  title: Text('Image #${index + 1}'),
-                                  subtitle: Text(
-                                    image.dropboxUrlImage ?? 'No image URL',
+                                clipBehavior: Clip.antiAlias,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _ImagePreview(url: url),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      ReorderableDragStartListener(
+                                        index: index,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              '${index + 1}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Icon(Icons.drag_handle),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  trailing: const Icon(Icons.drag_handle),
                                 ),
                               );
                             },
@@ -236,16 +257,16 @@ class _ImagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       child: Image.network(
         url,
-        width: 56,
-        height: 56,
+        width: double.infinity,
+        height: 140,
         fit: BoxFit.cover,
         errorBuilder: (_, error, stackTrace) {
           return Container(
-            width: 56,
-            height: 56,
+            width: double.infinity,
+            height: 140,
             color: Colors.grey.shade200,
             alignment: Alignment.center,
             child: const Icon(Icons.image_not_supported_outlined),

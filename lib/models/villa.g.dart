@@ -7,7 +7,7 @@ part of 'villa.dart';
 // **************************************************************************
 
 Villa _$VillaFromJson(Map<String, dynamic> json) => Villa(
-  id: (json['id'] as num).toInt(),
+  id: _asInt(json['id']),
   title: json['title'] as String,
   slug: json['slug'] as String,
   permalink: json['link'] as String?,
@@ -16,21 +16,20 @@ Villa _$VillaFromJson(Map<String, dynamic> json) => Villa(
   status: json['status'] as String,
   featuredImage: json['featured_image'] as String?,
   featuredImageUrl: json['featured_image_url'] as String?,
-  price: (json['price'] as num).toDouble(),
-  bathrooms: (json['bathrooms'] as num).toInt(),
-  bedrooms: (json['bedrooms'] as num).toInt(),
-  sleeps: (json['sleeps'] as num).toInt(),
-  sqft: (json['sqft'] as num?)?.toDouble(),
+  price: _asDouble(json['price']),
+  bathrooms: _asInt(json['bathrooms']),
+  bedrooms: _asInt(json['bedrooms']),
+  sleeps: _asInt(json['sleeps']),
+  sqft: _asNullableDouble(json['sqft']),
   view: json['view'] as String?,
-  longitude: (json['longitude'] as num?)?.toDouble(),
-  latitude: (json['latitude'] as num?)?.toDouble(),
+  longitude: _asNullableDouble(json['longitude']),
+  latitude: _asNullableDouble(json['latitude']),
   icalUrl: json['ical_url'] as String?,
-  taxesAndFees: (json['taxes_and_fees'] as num?)?.toDouble(),
-  damageWaiver: (json['damage_waiver'] as num?)?.toDouble(),
-  accommodationTaxesFees: (json['accommodation_taxes_fees'] as num?)
-      ?.toDouble(),
-  hoaFee: (json['hoa_fee'] as num?)?.toDouble(),
-  categoryId: (json['category_id'] as num).toInt(),
+  taxesAndFees: _asNullableDouble(json['taxes_and_fees']),
+  damageWaiver: _asNullableDouble(json['damage_waiver']),
+  accommodationTaxesFees: _asNullableDouble(json['accommodation_taxes_fees']),
+  hoaFee: _asNullableDouble(json['hoa_fee']),
+  categoryId: _asInt(json['category_id']),
   category: json['category'] == null
       ? null
       : Category.fromJson(json['category'] as Map<String, dynamic>),
@@ -78,9 +77,9 @@ Map<String, dynamic> _$VillaToJson(Villa instance) => <String, dynamic>{
 };
 
 VillaImage _$VillaImageFromJson(Map<String, dynamic> json) => VillaImage(
-  id: (json['id'] as num).toInt(),
+  id: _asInt(json['id']),
   dropboxUrlImage: json['dropbox_url_image'] as String?,
-  sortOrder: (json['sort_order'] as num?)?.toInt(),
+  sortOrder: _asNullableInt(json['sort_order']),
   isFeatured: json['is_featured'] as bool?,
 );
 
@@ -93,7 +92,7 @@ Map<String, dynamic> _$VillaImageToJson(VillaImage instance) =>
     };
 
 Category _$CategoryFromJson(Map<String, dynamic> json) => Category(
-  id: (json['id'] as num).toInt(),
+  id: _asInt(json['id']),
   name: json['name'] as String,
   fullPath: json['full_path'] as String?,
 );
@@ -105,7 +104,7 @@ Map<String, dynamic> _$CategoryToJson(Category instance) => <String, dynamic>{
 };
 
 Tag _$TagFromJson(Map<String, dynamic> json) =>
-    Tag(id: (json['id'] as num).toInt(), name: json['name'] as String);
+    Tag(id: _asInt(json['id']), name: json['name'] as String);
 
 Map<String, dynamic> _$TagToJson(Tag instance) => <String, dynamic>{
   'id': instance.id,
@@ -113,12 +112,12 @@ Map<String, dynamic> _$TagToJson(Tag instance) => <String, dynamic>{
 };
 
 SeasonalRate _$SeasonalRateFromJson(Map<String, dynamic> json) => SeasonalRate(
-  id: (json['id'] as num?)?.toInt(),
+  id: _asNullableInt(json['id']),
   season: json['season'] as String,
   startDate: json['start_date'] as String,
   endDate: json['end_date'] as String,
-  rate: (json['rate'] as num).toDouble(),
-  weekendRate: (json['weekend_rate'] as num?)?.toDouble(),
+  rate: _asDouble(json['rate']),
+  weekendRate: _asNullableDouble(json['weekend_rate']),
 );
 
 Map<String, dynamic> _$SeasonalRateToJson(SeasonalRate instance) =>
@@ -144,12 +143,12 @@ Map<String, dynamic> _$PaginatedVillasToJson(PaginatedVillas instance) =>
 
 PaginationMeta _$PaginationMetaFromJson(Map<String, dynamic> json) =>
     PaginationMeta(
-      currentPage: (json['current_page'] as num).toInt(),
-      lastPage: (json['last_page'] as num).toInt(),
-      perPage: (json['per_page'] as num).toInt(),
-      total: (json['total'] as num).toInt(),
-      from: (json['from'] as num).toInt(),
-      to: (json['to'] as num).toInt(),
+      currentPage: _asInt(json['current_page']),
+      lastPage: _asInt(json['last_page']),
+      perPage: _asInt(json['per_page']),
+      total: _asInt(json['total']),
+      from: _asInt(json['from']),
+      to: _asInt(json['to']),
     );
 
 Map<String, dynamic> _$PaginationMetaToJson(PaginationMeta instance) =>

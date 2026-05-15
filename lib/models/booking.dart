@@ -7,56 +7,101 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'booking.g.dart';
 
+int _asInt(dynamic value, {int fallback = 0}) {
+  if (value == null) return fallback;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return fallback;
+    return int.tryParse(normalized) ??
+        double.tryParse(normalized)?.toInt() ??
+        fallback;
+  }
+  return fallback;
+}
+
+double _asDouble(dynamic value, {double fallback = 0}) {
+  if (value == null) return fallback;
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return fallback;
+    return double.tryParse(normalized) ?? fallback;
+  }
+  return fallback;
+}
+
+double? _asNullableDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is String && value.trim().isEmpty) return null;
+  return _asDouble(value);
+}
+
+String _asString(dynamic value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  return value.toString();
+}
+
+String? _asNullableString(dynamic value) {
+  if (value == null) return null;
+  final normalized = value.toString();
+  return normalized.isEmpty ? null : normalized;
+}
+
 @JsonSerializable()
 class Booking {
+  @JsonKey(fromJson: _asInt)
   final int id;
-  @JsonKey(name: 'guest_name')
+  @JsonKey(name: 'guest_name', fromJson: _asString)
   final String guestName;
-  @JsonKey(name: 'guest_email')
+  @JsonKey(name: 'guest_email', fromJson: _asString)
   final String guestEmail;
-  @JsonKey(name: 'guest_phone')
+  @JsonKey(name: 'guest_phone', fromJson: _asNullableString)
   final String? guestPhone;
-  @JsonKey(name: 'check_in_date')
+  @JsonKey(name: 'check_in_date', fromJson: _asString)
   final String checkInDate;
-  @JsonKey(name: 'check_out_date')
+  @JsonKey(name: 'check_out_date', fromJson: _asString)
   final String checkOutDate;
-  @JsonKey(name: 'total_nights')
+  @JsonKey(name: 'total_nights', fromJson: _asInt)
   final int totalNights;
-  @JsonKey(name: 'guest_count')
+  @JsonKey(name: 'guest_count', fromJson: _asInt)
   final int guestCount;
-  @JsonKey(name: 'total_amount')
+  @JsonKey(name: 'total_amount', fromJson: _asDouble)
   final double totalAmount;
-  @JsonKey(name: 'special_requests')
+  @JsonKey(name: 'special_requests', fromJson: _asNullableString)
   final String? specialRequests;
+  @JsonKey(fromJson: _asString)
   final String status;
 
   // Payment schedule fields
-  @JsonKey(name: 'payment_rule')
+  @JsonKey(name: 'payment_rule', fromJson: _asString)
   final String paymentRule;
-  @JsonKey(name: 'deposit_amount')
+  @JsonKey(name: 'deposit_amount', fromJson: _asNullableDouble)
   final double? depositAmount;
-  @JsonKey(name: 'balance_amount')
+  @JsonKey(name: 'balance_amount', fromJson: _asNullableDouble)
   final double? balanceAmount;
-  @JsonKey(name: 'balance_due_date')
+  @JsonKey(name: 'balance_due_date', fromJson: _asNullableString)
   final String? balanceDueDate;
-  @JsonKey(name: 'balance_paid_at')
+  @JsonKey(name: 'balance_paid_at', fromJson: _asNullableString)
   final String? balancePaidAt;
-  @JsonKey(name: 'balance_status')
+  @JsonKey(name: 'balance_status', fromJson: _asNullableString)
   final String? balanceStatus;
 
   // Timestamps
-  @JsonKey(name: 'created_at')
+  @JsonKey(name: 'created_at', fromJson: _asString)
   final String createdAt;
-  @JsonKey(name: 'expires_at')
+  @JsonKey(name: 'expires_at', fromJson: _asString)
   final String expiresAt;
-  @JsonKey(name: 'authorized_at')
+  @JsonKey(name: 'authorized_at', fromJson: _asNullableString)
   final String? authorizedAt;
-  @JsonKey(name: 'captured_at')
+  @JsonKey(name: 'captured_at', fromJson: _asNullableString)
   final String? capturedAt;
-  @JsonKey(name: 'cancelled_at')
+  @JsonKey(name: 'cancelled_at', fromJson: _asNullableString)
   final String? cancelledAt;
 
-  @JsonKey(name: 'payment_environment')
+  @JsonKey(name: 'payment_environment', fromJson: _asString)
   final String paymentEnvironment;
 
   // Relation
@@ -171,8 +216,11 @@ class Booking {
 
 @JsonSerializable()
 class Villa {
+  @JsonKey(fromJson: _asInt)
   final int id;
+  @JsonKey(fromJson: _asString)
   final String title;
+  @JsonKey(fromJson: _asString)
   final String location;
 
   Villa({required this.id, required this.title, required this.location});
@@ -184,9 +232,13 @@ class Villa {
 
 @JsonSerializable()
 class PaymentStats {
+  @JsonKey(fromJson: _asInt)
   final int pending;
+  @JsonKey(fromJson: _asInt)
   final int confirmed;
+  @JsonKey(fromJson: _asInt)
   final int expired;
+  @JsonKey(fromJson: _asInt)
   final int cancelled;
 
   const PaymentStats({
@@ -205,10 +257,11 @@ class PaymentStats {
 @JsonSerializable()
 class PaginatedBookings {
   final List<Booking> data;
+  @JsonKey(fromJson: _asInt)
   final int total;
-  @JsonKey(name: 'per_page')
+  @JsonKey(name: 'per_page', fromJson: _asInt)
   final int perPage;
-  @JsonKey(name: 'current_page')
+  @JsonKey(name: 'current_page', fromJson: _asInt)
   final int currentPage;
 
   PaginatedBookings({
