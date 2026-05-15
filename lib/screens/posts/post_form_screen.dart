@@ -25,7 +25,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
   final _titleController = TextEditingController();
   final _slugController = TextEditingController();
   final _excerptController = TextEditingController();
-  final _contentController = TextEditingController();
   final _seoTitleController = TextEditingController();
   final _seoDescriptionController = TextEditingController();
   final _seoKeywordsController = TextEditingController();
@@ -33,6 +32,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   bool _isLoading = false;
   bool _isBootstrapping = true;
+  String _contentHtml = '';
   String _status = AppConstants.postStatuses.first;
   List<int> _selectedCategories = [];
   List<int> _selectedTags = [];
@@ -57,7 +57,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _titleController.text = post.title;
     _slugController.text = post.slug;
     _excerptController.text = post.excerpt ?? '';
-    _contentController.text = post.content ?? '';
+    _contentHtml = post.content ?? '';
     _status = post.status;
     _selectedCategories = post.categories?.map((item) => item.id).toList() ?? [];
     _selectedTags = post.tags?.map((item) => item.id).toList() ?? [];
@@ -92,7 +92,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
     _titleController.dispose();
     _slugController.dispose();
     _excerptController.dispose();
-    _contentController.dispose();
     _seoTitleController.dispose();
     _seoDescriptionController.dispose();
     _seoKeywordsController.dispose();
@@ -190,33 +189,7 @@ class _PostFormScreenState extends State<PostFormScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _contentController,
-                      maxLines: 8,
-                      decoration: const InputDecoration(
-                        labelText: 'Content',
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) =>
-                          AppValidators.requiredField(value, field: 'Content'),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _editorAction('H2', '<h2>', '</h2>'),
-                        _editorAction('Bold', '<strong>', '</strong>'),
-                        _editorAction('Quote', '<blockquote>', '</blockquote>'),
-                        _editorAction('UL', '<ul><li>', '</li></ul>'),
-                        OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _uploadEditorImage,
-                          icon: const Icon(Icons.image_outlined),
-                          label: const Text('Insert Image'),
-                        ),
-                      ],
-                    ),
+                    _buildContentField(),
                     if (widget.isEditing) ...[
                       const SizedBox(height: 16),
                       OutlinedButton(
@@ -321,6 +294,37 @@ class _PostFormScreenState extends State<PostFormScreen> {
     );
   }
 
+  Widget _buildContentField() {
+    final preview = _contentHtml
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InputDecorator(
+          decoration: const InputDecoration(
+            labelText: 'Content',
+            border: OutlineInputBorder(),
+          ),
+          child: Text(
+            preview.isEmpty
+                ? 'Content is managed in the web manager only.'
+                : preview,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Content cannot be edited in the app. Use the web manager.',
+        ),
+      ],
+    );
+  }
+
   Future<void> _pickFeaturedImage() async {
     final image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -410,9 +414,14 @@ class _PostFormScreenState extends State<PostFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final content = _contentHtml.trim();
+      if (content.isEmpty) {
+        throw Exception('Content is required.');
+      }
+
       final payload = <String, dynamic>{
         'title': _titleController.text.trim(),
-        'content': _contentController.text.trim(),
+        'content': content,
         'excerpt': _emptyToNull(_excerptController.text),
         'status': _status,
         'slug': widget.isEditing ? _slugController.text.trim() : null,
@@ -446,71 +455,6 @@ class _PostFormScreenState extends State<PostFormScreen> {
 
   String? _emptyToNull(String value) =>
       value.trim().isEmpty ? null : value.trim();
-
-  Widget _editorAction(String label, String startTag, String endTag) {
-    return OutlinedButton(
-      onPressed: _isLoading
-          ? null
-          : () => _wrapSelection(startTag: startTag, endTag: endTag),
-      child: Text(label),
-    );
-  }
-
-  void _wrapSelection({
-    required String startTag,
-    required String endTag,
-  }) {
-    final text = _contentController.text;
-    final selection = _contentController.selection;
-    if (!selection.isValid) {
-      _contentController.text = '$text$startTag$endTag';
-      return;
-    }
-
-    final start = selection.start < 0 ? text.length : selection.start;
-    final end = selection.end < 0 ? text.length : selection.end;
-    final selected = text.substring(start, end);
-    final replacement = '$startTag$selected$endTag';
-    final updated = text.replaceRange(start, end, replacement);
-
-    _contentController.value = TextEditingValue(
-      text: updated,
-      selection: TextSelection.collapsed(
-        offset: start + replacement.length,
-      ),
-    );
-  }
-
-  Future<void> _uploadEditorImage() async {
-    final image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-
-    if (image == null) {
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      final response = await postService.uploadEditorImage(image);
-      final url = response['url']?.toString();
-      if (url == null || url.isEmpty) {
-        throw Exception('Image upload did not return a URL.');
-      }
-
-      _wrapSelection(
-        startTag: '<img src="$url" alt="">',
-        endTag: '',
-      );
-    } catch (error) {
-      _showMessage(error.toString());
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   Future<void> _openGallery() async {
     final postId = widget.post?.id;

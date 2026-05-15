@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/connectivity_provider.dart';
@@ -17,6 +18,8 @@ class ManagerHomeScreen extends ConsumerStatefulWidget {
 
 class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
   int _currentIndex = 0;
+  static const _navy = Color(0xFF252B5A);
+  static const _gold = Color(0xFFB39123);
 
   static const _titles = [
     'Villas',
@@ -39,16 +42,35 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
+        backgroundColor: _navy,
+        foregroundColor: Colors.white,
+        title: Text(
+          _titles[_currentIndex],
+          style: GoogleFonts.notoSerif(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         actions: [
           if (user != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Center(child: Text(user.name)),
+              child: Center(
+                child: Text(
+                  user.name,
+                  style: GoogleFonts.raleway(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           IconButton(
             onPressed: () => ref.read(authProvider.notifier).logout(),
             icon: const Icon(Icons.logout),
+            color: _gold,
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/payment_provider.dart';
 import '../../utils/app_feedback.dart';
@@ -21,19 +22,21 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
     (label: 'Expired', value: 'expired'),
     (label: 'Cancelled', value: 'cancelled'),
   ];
+  late final PaymentNotifier _paymentNotifier;
 
   @override
   void initState() {
     super.initState();
+    _paymentNotifier = ref.read(paymentProvider.notifier);
     Future.microtask(() {
-      ref.read(paymentProvider.notifier).load();
-      ref.read(paymentProvider.notifier).startAutoRefresh();
+      _paymentNotifier.load();
+      _paymentNotifier.startAutoRefresh();
     });
   }
 
   @override
   void dispose() {
-    ref.read(paymentProvider.notifier).stopAutoRefresh();
+    _paymentNotifier.stopAutoRefresh();
     super.dispose();
   }
 
@@ -55,9 +58,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
                   value: _statusCount(state, option.value).toString(),
                   isSelected: state.status == option.value,
                   onTap: () {
-                    ref
-                        .read(paymentProvider.notifier)
-                        .load(status: option.value);
+                    _paymentNotifier.load(status: option.value);
                   },
                 ),
             ],
@@ -78,7 +79,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
     if (state.errorMessage != null && state.items.isEmpty) {
       return ErrorView(
         message: state.errorMessage!,
-        onRetry: () => ref.read(paymentProvider.notifier).load(),
+        onRetry: () => _paymentNotifier.load(),
       );
     }
 
@@ -153,9 +154,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
           lastPage: lastPage,
           total: state.total,
           onPageChanged: (page) {
-            ref
-                .read(paymentProvider.notifier)
-                .load(page: page, status: state.status);
+            _paymentNotifier.load(page: page, status: state.status);
           },
         ),
       ],
@@ -188,7 +187,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
     }
 
     try {
-      await ref.read(paymentProvider.notifier).capture(bookingId);
+      await _paymentNotifier.capture(bookingId);
       if (mounted) {
         AppFeedback.success(context, 'Payment captured successfully.');
       }
@@ -231,7 +230,7 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
     }
 
     try {
-      await ref.read(paymentProvider.notifier).cancel(bookingId, reason);
+      await _paymentNotifier.cancel(bookingId, reason);
       if (mounted) {
         AppFeedback.success(context, 'Booking cancelled successfully.');
       }
@@ -330,6 +329,8 @@ class _PaymentsListScreenState extends ConsumerState<PaymentsListScreen> {
 }
 
 class _StatChip extends StatelessWidget {
+  static const _gold = Color(0xFFB39123);
+  static const _navy = Color(0xFF252B5A);
   final String label;
   final String value;
   final bool isSelected;
@@ -345,8 +346,21 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChoiceChip(
-      label: Text('$label: $value'),
+      label: Text(
+        '$label: $value',
+        style: GoogleFonts.raleway(
+          color: _navy,
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+        ),
+      ),
       selected: isSelected,
+      selectedColor: _gold.withValues(alpha: 0.22),
+      backgroundColor: Colors.white,
+      side: BorderSide(color: _navy.withValues(alpha: 0.18)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      showCheckmark: true,
+      checkmarkColor: _navy,
       onSelected: (_) => onTap?.call(),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../constants/app_constants.dart';
 import '../../models/villa.dart';
@@ -21,12 +22,13 @@ class VillaFormScreen extends StatefulWidget {
 }
 
 class _VillaFormScreenState extends State<VillaFormScreen> {
+  static const _navy = Color(0xFF252B5A);
+  static const _gold = Color(0xFFB39123);
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _slugController = TextEditingController();
   final _permalinkController = TextEditingController();
   final _excerptController = TextEditingController();
-  final _contentController = TextEditingController();
   final _priceController = TextEditingController();
   final _bathroomsController = TextEditingController();
   final _bedroomsController = TextEditingController();
@@ -41,6 +43,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
 
   bool _isLoading = false;
   bool _isBootstrapping = true;
+  String _contentHtml = '';
   String? _status;
   int? _categoryId;
   List<int> _selectedTags = [];
@@ -69,7 +72,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
     _slugController.text = villa.slug;
     _permalinkController.text = villa.permalink ?? '';
     _excerptController.text = villa.excerpt ?? '';
-    _contentController.text = villa.content ?? '';
+    _contentHtml = villa.content ?? '';
     _priceController.text = villa.price.toString();
     _bathroomsController.text = villa.bathrooms.toString();
     _bedroomsController.text = villa.bedrooms.toString();
@@ -120,7 +123,6 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
     _slugController.dispose();
     _permalinkController.dispose();
     _excerptController.dispose();
-    _contentController.dispose();
     _priceController.dispose();
     _bathroomsController.dispose();
     _bedroomsController.dispose();
@@ -139,11 +141,26 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit Villa' : 'Create Villa'),
+        backgroundColor: _navy,
+        foregroundColor: Colors.white,
+        title: Text(
+          widget.isEditing ? 'Edit Villa' : 'Create Villa',
+          style: GoogleFonts.notoSerif(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _generatePermalink,
-            child: const Text('Permalink'),
+            child: Text(
+              'Permalink',
+              style: GoogleFonts.raleway(
+                color: _gold,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -164,10 +181,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
                       initialValue: _categoryId,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: _inputDecoration('Category'),
                       items: _categories
                           .map(
                             (item) => DropdownMenuItem<int>(
@@ -199,6 +213,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                         IconButton(
                           onPressed: _isLoading ? null : _generatePermalink,
                           icon: const Icon(Icons.auto_fix_high),
+                          color: _gold,
                         ),
                       ],
                     ),
@@ -214,10 +229,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       initialValue: _status,
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: _inputDecoration('Status'),
                       items: AppConstants.villaStatuses
                           .map(
                             (status) => DropdownMenuItem(
@@ -239,11 +251,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
-                    _buildTextField(
-                      controller: _contentController,
-                      label: 'Content',
-                      maxLines: 6,
-                    ),
+                    _buildContentField(),
                     const SizedBox(height: 16),
                     _buildNumberGrid(),
                     const SizedBox(height: 16),
@@ -309,10 +317,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
     return InkWell(
       onTap: _isLoading ? null : () => _openTagPicker(context),
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Tags',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _inputDecoration('Tags'),
         child: Text(labels.isEmpty ? 'Select tags' : labels),
       ),
     );
@@ -440,16 +445,73 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
     String? Function(String?)? validator,
     int maxLines = 1,
     TextInputType? keyboardType,
+    bool alignLabelWithHint = false,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
+      style: GoogleFonts.raleway(color: _navy),
+      decoration: _inputDecoration(
+        label,
+        alignLabelWithHint: alignLabelWithHint,
       ),
       validator: validator,
+    );
+  }
+
+  Widget _buildContentField() {
+    final preview = _contentHtml
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InputDecorator(
+          decoration: _inputDecoration('Content', alignLabelWithHint: true),
+          child: Text(
+            preview.isEmpty
+                ? 'Content is managed in the web manager only.'
+                : preview,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.raleway(color: _navy),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Content cannot be edited in the app. Use the web manager.',
+          style: GoogleFonts.raleway(
+            color: _navy.withValues(alpha: 0.68),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(
+    String label, {
+    bool alignLabelWithHint = false,
+  }) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _gold),
+    );
+
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.raleway(color: _navy.withValues(alpha: 0.72)),
+      alignLabelWithHint: alignLabelWithHint,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: const BorderSide(color: _gold, width: 1.6),
+      ),
+      border: border,
     );
   }
 
@@ -506,7 +568,7 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
         'slug': _slugController.text.trim(),
         'link': _permalinkController.text.trim(),
         'excerpt': _emptyToNull(_excerptController.text),
-        'content': _emptyToNull(_contentController.text),
+        'content': _emptyToNull(_contentHtml),
         'status': _status,
         'price': _parseNum(_priceController.text),
         'bathrooms': _parseInt(_bathroomsController.text),

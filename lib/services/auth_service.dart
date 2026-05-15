@@ -33,12 +33,24 @@ class AuthService extends BaseService {
   }
 
   Future<void> logout() async {
+    final token = await BaseService.readToken();
+
+    await BaseService.clearSession();
+
+    if (token == null || token.isEmpty) {
+      return;
+    }
+
     try {
-      await post(ApiConfig.logout);
+      await post(
+        ApiConfig.logout,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'X-Mobile-Token': token,
+        },
+      );
     } catch (_) {
       // Local logout should still proceed if backend token is already invalid.
-    } finally {
-      await BaseService.clearSession();
     }
   }
 

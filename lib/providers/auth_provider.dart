@@ -1,5 +1,7 @@
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../models/auth_user.dart';
@@ -93,9 +95,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    await authService.logout();
     state = const AuthState(isInitialized: true);
+    unawaited(authService.logout());
   }
 
   Future<void> handleUnauthorized() async {
