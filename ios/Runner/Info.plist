@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CSLV uses your location while you use the app to support map-based villa browsing and location-aware property details.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CSLV uses your photo library so managers can select and upload villa and post images from this device.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
