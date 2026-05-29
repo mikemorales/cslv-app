@@ -1,4 +1,4 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
@@ -86,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               controller: _loginController,
                               style: const TextStyle(color: Colors.white),
                               decoration: _inputDecoration(
-                                labelText: 'Email or username',
+                                labelText: 'Email',
                               ),
                               validator: AppValidators.requiredField,
                             ),
