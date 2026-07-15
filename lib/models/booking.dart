@@ -33,10 +33,55 @@ double _asDouble(dynamic value, {double fallback = 0}) {
   return fallback;
 }
 
+double _asCurrencyFromCents(dynamic value) {
+  if (value == null) return 0;
+
+  if (value is int) {
+    return value / 100;
+  }
+
+  if (value is double) {
+    return value;
+  }
+
+  if (value is num) {
+    final normalized = value.toDouble();
+    if (normalized % 1 != 0) {
+      return normalized;
+    }
+
+    return normalized / 100;
+  }
+
+  if (value is String) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) return 0;
+
+    if (normalized.contains('.')) {
+      return double.tryParse(normalized) ?? 0;
+    }
+
+    final parsedInt = int.tryParse(normalized);
+    if (parsedInt != null) {
+      return parsedInt / 100;
+    }
+
+    return double.tryParse(normalized) ?? 0;
+  }
+
+  return 0;
+}
+
 double? _asNullableDouble(dynamic value) {
   if (value == null) return null;
   if (value is String && value.trim().isEmpty) return null;
   return _asDouble(value);
+}
+
+double? _asNullableCurrencyFromCents(dynamic value) {
+  if (value == null) return null;
+  if (value is String && value.trim().isEmpty) return null;
+  return _asCurrencyFromCents(value);
 }
 
 String _asString(dynamic value, {String fallback = ''}) {
@@ -68,7 +113,7 @@ class Booking {
   final int totalNights;
   @JsonKey(name: 'guest_count', fromJson: _asInt)
   final int guestCount;
-  @JsonKey(name: 'total_amount', fromJson: _asDouble)
+  @JsonKey(name: 'total_amount', fromJson: _asCurrencyFromCents)
   final double totalAmount;
   @JsonKey(name: 'special_requests', fromJson: _asNullableString)
   final String? specialRequests;
@@ -78,9 +123,9 @@ class Booking {
   // Payment schedule fields
   @JsonKey(name: 'payment_rule', fromJson: _asString)
   final String paymentRule;
-  @JsonKey(name: 'deposit_amount', fromJson: _asNullableDouble)
+  @JsonKey(name: 'deposit_amount', fromJson: _asNullableCurrencyFromCents)
   final double? depositAmount;
-  @JsonKey(name: 'balance_amount', fromJson: _asNullableDouble)
+  @JsonKey(name: 'balance_amount', fromJson: _asNullableCurrencyFromCents)
   final double? balanceAmount;
   @JsonKey(name: 'balance_due_date', fromJson: _asNullableString)
   final String? balanceDueDate;
