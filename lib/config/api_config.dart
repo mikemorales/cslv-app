@@ -65,6 +65,10 @@ class ApiConfig {
   static String cancelPayment(int id) => '$payments/cancel/$id';
   static String recapturePayment(int id) => '$payments/recapture/$id';
 
+  static const String seoDashboard = '/app/seo/dashboard';
+  static String seoPerformanceTimeline(int pageId) =>
+      '/app/seo/pages/$pageId/performance-timeline';
+
   static const int defaultPerPage = 15;
   static const int paymentsPerPage = 20;
   static const int connectTimeout = 15000;

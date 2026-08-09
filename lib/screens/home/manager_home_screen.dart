@@ -7,6 +7,7 @@ import '../../providers/connectivity_provider.dart';
 import '../administrators/administrators_list_screen.dart';
 import '../payments/payments_list_screen.dart';
 import '../posts/posts_list_screen.dart';
+import '../seo/seo_screen.dart';
 import '../villas/villas_list_screen.dart';
 
 class ManagerHomeScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
     'Posts',
     'Administrators',
     'Pending Payments',
+    'SEO',
   ];
 
   static const _screens = [
@@ -33,6 +35,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
     PostsListScreen(),
     AdministratorsListScreen(),
     PaymentsListScreen(),
+    SeoScreen(),
   ];
 
   @override
@@ -95,10 +98,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
             error: (_, stackTrace) => const SizedBox.shrink(),
           ),
           Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _screens,
-            ),
+            child: IndexedStack(index: _currentIndex, children: _screens),
           ),
         ],
       ),
@@ -112,6 +112,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
           NavigationDestination(icon: Icon(Icons.article), label: 'Posts'),
           NavigationDestination(icon: Icon(Icons.group), label: 'Admins'),
           NavigationDestination(icon: Icon(Icons.payments), label: 'Payments'),
+          NavigationDestination(icon: Icon(Icons.query_stats), label: 'SEO'),
         ],
       ),
     );
