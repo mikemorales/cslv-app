@@ -69,6 +69,10 @@ class ApiConfig {
   static String seoPerformanceTimeline(int pageId) =>
       '/app/seo/pages/$pageId/performance-timeline';
 
+  static const String clarityCampaigns = '/app/clarity/campaigns';
+  static const String clarityImportRecordings =
+      '/app/clarity/recordings/import';
+
   static const int defaultPerPage = 15;
   static const int paymentsPerPage = 20;
   static const int connectTimeout = 15000;

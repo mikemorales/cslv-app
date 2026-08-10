@@ -68,6 +68,7 @@ dependencies:
   # Utilities
   intl: ^0.20.0
   connectivity_plus: ^7.1.1
+  file_picker: ^11.0.2
   smooth_page_indicator: ^2.0.1
   
   # Dialogs & Notifications

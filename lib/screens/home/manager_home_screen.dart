@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/connectivity_provider.dart';
 import '../administrators/administrators_list_screen.dart';
+import '../campaigns/campaign_evidence_screen.dart';
 import '../payments/payments_list_screen.dart';
 import '../posts/posts_list_screen.dart';
 import '../seo/seo_screen.dart';
@@ -28,6 +29,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
     'Administrators',
     'Pending Payments',
     'SEO',
+    'Campaign Evidence',
   ];
 
   static const _screens = [
@@ -36,6 +38,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
     AdministratorsListScreen(),
     PaymentsListScreen(),
     SeoScreen(),
+    CampaignEvidenceScreen(),
   ];
 
   @override
@@ -113,6 +116,7 @@ class _ManagerHomeScreenState extends ConsumerState<ManagerHomeScreen> {
           NavigationDestination(icon: Icon(Icons.group), label: 'Admins'),
           NavigationDestination(icon: Icon(Icons.payments), label: 'Payments'),
           NavigationDestination(icon: Icon(Icons.query_stats), label: 'SEO'),
+          NavigationDestination(icon: Icon(Icons.campaign), label: 'Campaigns'),
         ],
       ),
     );
