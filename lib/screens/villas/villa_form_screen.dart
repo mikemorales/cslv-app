@@ -164,8 +164,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
         ),
         actions: [
           TextButton(
-            onPressed:
-                _isLoading || !canVisitUrl ? null : _openPermalinkInBrowser,
+            onPressed: _isLoading || !canVisitUrl
+                ? null
+                : _openPermalinkInBrowser,
             child: Text(
               'Visit URL',
               style: GoogleFonts.raleway(
@@ -630,7 +631,9 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
       return directUri;
     }
 
-    final normalizedPath = permalink.startsWith('/') ? permalink : '/$permalink';
+    final normalizedPath = permalink.startsWith('/')
+        ? permalink
+        : '/$permalink';
     return Uri.tryParse('${ApiConfig.baseUrl}$normalizedPath');
   }
 
@@ -743,8 +746,20 @@ class _VillaFormScreenState extends State<VillaFormScreen> {
 
   num _parseNum(String value) => num.parse(value.trim());
   int _parseInt(String value) => int.parse(value.trim());
-  int? _parseNullableInt(String value) =>
-      value.trim().isEmpty ? null : int.parse(value.trim());
+  int? _parseNullableInt(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+
+    final parsed = num.parse(trimmed);
+    if (parsed % 1 != 0) {
+      throw const FormatException('Value must be a whole number.');
+    }
+
+    return parsed.toInt();
+  }
+
   String? _emptyToNull(String value) =>
       value.trim().isEmpty ? null : value.trim();
 
